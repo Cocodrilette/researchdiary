@@ -1,0 +1,26 @@
+package apa
+
+import (
+	"testing"
+	"time"
+)
+
+func TestAPAFormater(t *testing.T) {
+
+	testArticle := Article{
+		Author:        Author{firstName: "Juan", lastName: "Moliner"},
+		Title:         "Algunos problemas éticos de las tecnologías militares emergentes",
+		PageRange:     [2]int{522, 541},
+		DatePublished: time.Date(2018, 2, 19, 0, 0, 0, 0, time.UTC),
+		DateViewed:    time.Date(2026, 2, 18, 0, 0, 0, 0, time.UTC),
+		URL:           "https://dialnet.unirioja.es/descarga/articulo/6467952.pdf",
+		JournalName:   "Instituto Español de Estudio Estrátegicos",
+	}
+
+	got := testArticle.APA()
+	want := "Moliner, J. (2018). Algunos problemas éticos de las tecnologías militares emergentes. Instituto Español de Estudio Estrátegicos, 522-541. https://dialnet.unirioja.es/descarga/articulo/6467952.pdf"
+
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
