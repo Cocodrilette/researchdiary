@@ -151,7 +151,7 @@ func (a *ArticleManager) Create(article *Article) error {
 
 func (a *ArticleManager) Find(query string) ([]Article, error) {
 	var articles []Article
-	result := a.DB.Find(&articles).Scan(&articles)
+	result := a.DB.Find(&articles)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find articles: %w", result.Error)
 	}
