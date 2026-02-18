@@ -15,7 +15,6 @@ func TestAPAFormater(t *testing.T) {
 			Title:         "Algunos problemas éticos de las tecnologías militares emergentes",
 			PageRange:     [2]int{522, 541},
 			DatePublished: time.Date(2018, 2, 19, 0, 0, 0, 0, time.UTC),
-			DateViewed:    time.Date(2026, 2, 18, 0, 0, 0, 0, time.UTC),
 			URL:           &url,
 			JournalName:   &journalName,
 		}
@@ -34,7 +33,6 @@ func TestAPAFormater(t *testing.T) {
 			Title:         "Algunos problemas éticos de las tecnologías militares emergentes",
 			PageRange:     [2]int{522, 541},
 			DatePublished: time.Date(2018, 2, 19, 0, 0, 0, 0, time.UTC),
-			DateViewed:    time.Date(2026, 2, 18, 0, 0, 0, 0, time.UTC),
 		}
 		got := article.APA()
 		want := "Moliner, J. (2018). Algunos problemas éticos de las tecnologías militares emergentes. 522-541."
