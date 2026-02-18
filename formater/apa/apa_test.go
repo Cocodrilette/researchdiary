@@ -7,13 +7,14 @@ import (
 
 func TestAPAFormater(t *testing.T) {
 
+	url := "https://dialnet.unirioja.es/descarga/articulo/6467952.pdf"
 	testArticle := Article{
 		Author:        Author{firstName: "Juan", lastName: "Moliner"},
 		Title:         "Algunos problemas éticos de las tecnologías militares emergentes",
 		PageRange:     [2]int{522, 541},
 		DatePublished: time.Date(2018, 2, 19, 0, 0, 0, 0, time.UTC),
 		DateViewed:    time.Date(2026, 2, 18, 0, 0, 0, 0, time.UTC),
-		URL:           "https://dialnet.unirioja.es/descarga/articulo/6467952.pdf",
+		URL:           &url,
 		JournalName:   "Instituto Español de Estudio Estrátegicos",
 	}
 

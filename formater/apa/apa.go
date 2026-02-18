@@ -1,14 +1,25 @@
 package apa
 
 import (
-	"fmt"
 	"strings"
+	"text/template"
 	"time"
 )
 
 type Author struct {
 	firstName string
 	lastName  string
+}
+
+func (a Author) LastName() string {
+	return a.lastName
+}
+
+func (a Author) FirstInitial() string {
+	if len(a.firstName) == 0 {
+		return ""
+	}
+	return string([]rune(a.firstName)[0])
 }
 
 type PageRange [2]int
@@ -18,29 +29,25 @@ type Article struct {
 	Title         string
 	DatePublished time.Time
 	PageRange     PageRange
-	URL           string
+	URL           *string
 	DateViewed    time.Time
 	JournalName   string
 	Anotation     string
 }
 
-const APAFormat = "{Author.lastName}, {Author.firstName.First()}. ({Self.DatePublished.Year}). {Self.Title}. {Self.JournalName}, {Self.PageRange[0]-Self.PageRange[1]}. {URL}"
+const APAFormatTemplate = `{{.Author.LastName}}, {{.Author.FirstInitial}}. ({{.DatePublished.Year}}). {{.Title}}. {{.JournalName}}, {{index .PageRange 0}}-{{index .PageRange 1}}.{{if .URL}} {{.URL}}{{end}}`
 
 func (a *Article) APA() string {
+	tmpl, err := template.New("apa").Parse(APAFormatTemplate)
+	if err != nil {
+		return ""
+	}
 
-	APAStr := APAFormat
+	var result strings.Builder
+	err = tmpl.Execute(&result, a)
+	if err != nil {
+		return ""
+	}
 
-	APAStr = strings.Replace(APAStr, "{Author.lastName}", a.Author.lastName, 1)
-	authorFirstNameFirstChar := string([]rune(a.Author.firstName)[0])
-	APAStr = strings.Replace(APAStr, "{Author.firstName.First()}", authorFirstNameFirstChar, 1)
-	APAStr = strings.Replace(APAStr, "{Self.DatePublished.Year}", fmt.Sprintf("%d", a.DatePublished.Year()), 1)
-	APAStr = strings.Replace(APAStr, "{Self.Title}", a.Title, 1)
-	APAStr = strings.Replace(APAStr, "{Self.JournalName}", a.JournalName, 1)
-
-	pageRange := fmt.Sprintf("%d-%d", a.PageRange[0], a.PageRange[1])
-	APAStr = strings.Replace(APAStr, "{Self.PageRange[0]-Self.PageRange[1]}", pageRange, 1)
-
-	APAStr = strings.Replace(APAStr, "{URL}", a.URL, 1)
-
-	return APAStr
+	return result.String()
 }
