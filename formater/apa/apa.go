@@ -7,19 +7,15 @@ import (
 )
 
 type Author struct {
-	firstName string
-	lastName  string
-}
-
-func (a Author) LastName() string {
-	return a.lastName
+	FirstName string
+	LastName  string
 }
 
 func (a Author) FirstInitial() string {
-	if len(a.firstName) == 0 {
+	if len(a.FirstName) == 0 {
 		return ""
 	}
-	return string([]rune(a.firstName)[0])
+	return string([]rune(a.FirstName)[0])
 }
 
 type PageRange [2]int
