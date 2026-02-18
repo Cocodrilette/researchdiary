@@ -1,4 +1,4 @@
-package apa
+package models
 
 import (
 	"testing"
