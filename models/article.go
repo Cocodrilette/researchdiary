@@ -156,6 +156,7 @@ func (a *ArticleManager) Find(query string) ([]Article, error) {
 		return nil, fmt.Errorf("failed to find articles: %w", result.Error)
 	}
 
+	fmt.Printf("Found %d articles", result.RowsAffected)
 	return articles, nil
 }
 
