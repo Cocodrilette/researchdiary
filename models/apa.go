@@ -5,7 +5,7 @@ import (
 	"text/template"
 )
 
-const APAFormatTemplate = `{{.Author.LastName}}, {{.Author.FirstInitial}}. ({{.DatePublished.Year}}). {{.Title}}.{{if .JournalName}} {{.JournalName}},{{end}} {{index .PageRange 0}}-{{index .PageRange 1}}.{{if .URL}} {{.URL}}{{end}}`
+const APAFormatTemplate = `{{.Author.LastName}}, {{.Author.FirstInitial}}. ({{.DatePublished.Year}}). {{.Title}}.{{if .JournalName}} {{.JournalName}},{{end}} {{.PageRangeStart}}-{{.PageRangeEnd}}.{{if .URL}} {{.URL}}{{end}}`
 
 func (a *Article) APA() string {
 	tmpl, err := template.New("apa").Parse(APAFormatTemplate)

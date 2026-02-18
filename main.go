@@ -2,24 +2,39 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"os"
 
+	"github.com/cocodrilette/researchdiary/infra"
 	"github.com/cocodrilette/researchdiary/models"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	url := "https://dialnet.unirioja.es/descarga/articulo/6467952.pdf"
-	journalName := "Instituto Español de Estudio Estrátegicos"
+	godotenv.Load(".env")
 
-	article := models.Article{
-		Author:        models.Author{FirstName: "Juan", LastName: "Moliner"},
-		Title:         "Algunos problemas éticos de las tecnologías militares emergentes",
-		PageRange:     [2]int{522, 541},
-		DatePublished: time.Date(2018, 2, 19, 0, 0, 0, 0, time.UTC),
-		DateViewed:    time.Date(2026, 2, 18, 0, 0, 0, 0, time.UTC),
-		URL:           &url,
-		JournalName:   &journalName,
+	db, err := infra.Database.Connect2()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "database connection failed: %v\n", err)
+		os.Exit(1)
 	}
 
-	fmt.Println(article.APA())
+	db.AutoMigrate(&models.Article{}, &models.Author{})
+
+	articleManager := models.ArticleManager{DB: db}
+	result, _ := articleManager.Find("")
+
+	fmt.Println(result)
+
+	// article, err := articleManager.NewFromTerminal(os.Stdin)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "cannot create article from terminal: %v\n", err)
+	// }
+
+	// err = articleManager.Create(&article)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "cannot create in db: %v\n", err)
+	// }
+
+	// fmt.Println(article)
+
 }

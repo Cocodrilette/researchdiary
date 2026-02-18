@@ -23,13 +23,14 @@ func TestNewArticleFromTerminal(t *testing.T) {
 		annot := "Some annotation"
 
 		want := Article{
-			Title:         "Test1",
-			Author:        Author{FirstName: "AuthorFN", LastName: "AuthorLN"},
-			DatePublished: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-			PageRange:     &PageRange{1, 10},
-			URL:           &url,
-			JournalName:   &journal,
-			Anotation:     &annot,
+			Title:          "Test1",
+			Author:         Author{FirstName: "AuthorFN", LastName: "AuthorLN"},
+			DatePublished:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			PageRangeStart: 1,
+			PageRangeEnd:   10,
+			URL:            &url,
+			JournalName:    &journal,
+			Annotation:     &annot,
 		}
 
 		if !reflect.DeepEqual(got, want) {

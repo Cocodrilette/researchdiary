@@ -9,22 +9,29 @@ import (
 	"time"
 
 	"github.com/cocodrilette/researchdiary/formater"
+	"gorm.io/gorm"
 )
 
 type PageRange [2]int
 
 type Article struct {
-	Author        Author
-	Title         string
-	DatePublished time.Time
-	PageRange     *PageRange
-	URL           *string
-	JournalName   *string
-	Anotation     *string
+	gorm.Model
+
+	ID uint64 `gorm:"primaryKey;autoIncrement:true"`
+
+	AuthorID       uint
+	Author         Author `gorm:"foreignKey:AuthorID"`
+	Title          string
+	DatePublished  time.Time
+	PageRangeStart uint64
+	PageRangeEnd   uint64
+	URL            *string
+	JournalName    *string
+	Annotation     *string
 }
 
 type ArticleManager struct {
-	article Article
+	DB *gorm.DB
 }
 
 // const (
@@ -68,16 +75,31 @@ func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 	}
 
 	pageRangeStr := getUserInput(reader, "Ingresa el rango de paginas (inicio-fin): ")
-	var pageRange *PageRange
+	var pageRangeStart *int
+	var pageRangeEnd *int
+
 	if pageRangeStr != "" {
 		parts := strings.Split(pageRangeStr, "-")
 		if len(parts) == 2 {
 			start, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
 			end, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+
 			if err1 == nil && err2 == nil {
-				pageRange = &PageRange{start, end}
+				pageRangeStart = &start
+				pageRangeEnd = &end
 			}
 		}
+	}
+
+	if pageRangeStart == nil || pageRangeEnd == nil {
+		return Article{}, fmt.Errorf("invalid page range format, expected start-end")
+	}
+
+	pageRangeStartInt := uint64(*pageRangeStart)
+	pageRangeEndInt := uint64(*pageRangeEnd)
+
+	if pageRangeStartInt > pageRangeEndInt {
+		return Article{}, fmt.Errorf("page range start cannot be greater than end")
 	}
 
 	urlStr := getUserInput(reader, "Ingresa la URL: ")
@@ -93,33 +115,48 @@ func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 	}
 
 	annotStr := getUserInput(reader, "Ingresa la anotacion: ")
-	var anotation *string
+	var annotation *string
 	if annotStr != "" {
-		anotation = &annotStr
+		annotation = &annotStr
 	}
 
 	if dateStr != "" && datePublished.IsZero() {
 		return Article{}, fmt.Errorf("invalid date format, expected YYYY-MM-DD")
-	}
-	if pageRangeStr != "" && pageRange == nil {
-		return Article{}, fmt.Errorf("invalid page range format, expected start-end")
-	}
-	if pageRange != nil && pageRange[0] > pageRange[1] {
-		return Article{}, fmt.Errorf("page range start cannot be greater than end")
 	}
 	if urlStr != "" && !strings.HasPrefix(urlStr, "http://") && !strings.HasPrefix(urlStr, "https://") {
 		return Article{}, fmt.Errorf("URL must start with http:// or https://")
 	}
 
 	return Article{
-		Title:         title,
-		Author:        Author{LastName: authorLastname, FirstName: authorFirstname},
-		DatePublished: datePublished,
-		PageRange:     pageRange,
-		URL:           url,
-		JournalName:   journalName,
-		Anotation:     anotation,
+		Title:          title,
+		Author:         Author{LastName: authorLastname, FirstName: authorFirstname},
+		DatePublished:  datePublished,
+		PageRangeStart: pageRangeStartInt,
+		PageRangeEnd:   pageRangeEndInt,
+		URL:            url,
+		JournalName:    journalName,
+		Annotation:     annotation,
 	}, nil
+}
+
+func (a *ArticleManager) Create(article *Article) error {
+	err := a.DB.Create(article).Error
+	if err != nil {
+		return fmt.Errorf("failed to create article: %w", err)
+	}
+
+	fmt.Println("Created article with ID:", article.ID)
+	return nil
+}
+
+func (a *ArticleManager) Find(query string) ([]Article, error) {
+	var articles []Article
+	result := a.DB.Find(&articles).Scan(&articles)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to find articles: %w", result.Error)
+	}
+
+	return articles, nil
 }
 
 func getUserInput(in *bufio.Reader, instruction string) string {
