@@ -8,8 +8,12 @@ type Article struct {
 	Author        Author
 	Title         string
 	DatePublished time.Time
-	PageRange     PageRange
+	PageRange     *PageRange
 	URL           *string
 	JournalName   *string
 	Anotation     *string
+}
+
+func (a *Article) NewFromTerminal(article Article) {
+
 }
