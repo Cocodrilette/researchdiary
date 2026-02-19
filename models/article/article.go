@@ -2,6 +2,7 @@ package models
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -9,23 +10,25 @@ import (
 	"time"
 
 	"github.com/cocodrilette/researchdiary/formater"
+	"github.com/cocodrilette/researchdiary/models"
 	"gorm.io/gorm"
 )
+
+type TableName string
+
+const tableName = TableName("articles")
 
 type PageRange [2]int
 
 type Article struct {
-	ID        uint `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	gorm.Model
 
 	AuthorID       uint
-	Author         Author `gorm:"foreignKey:AuthorID"`
+	Author         models.Author `gorm:"foreignKey:AuthorID"`
 	Title          string
 	DatePublished  time.Time
-	PageRangeStart uint64
-	PageRangeEnd   uint64
+	PageRangeStart uint
+	PageRangeEnd   uint
 	URL            *string
 	JournalName    *string
 	Annotation     *string
@@ -35,13 +38,9 @@ type ArticleManager struct {
 	DB *gorm.DB
 }
 
-// const (
-// 	ErrNotFound      = DictionaryErr("could not find the word you were looking for")
-// 	ErrAlreadyExists = DictionaryErr("a value for this key already exists")
-// 	ErrDoesNotExists = DictionaryErr("does not exists key")
-// )
-
 type EmptyStrErr string
+
+type UpdateQuery map[string]any
 
 // Any type with an Error() string method fulfils the error interface
 func (e EmptyStrErr) Error() string {
@@ -50,24 +49,25 @@ func (e EmptyStrErr) Error() string {
 
 func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 	reader := bufio.NewReader(in)
+	var buffer bytes.Buffer
 
-	title := getUserInput(reader, "Ingresa el titulo: ")
+	title := getUserInput(reader, &buffer, "Ingresa el titulo: ")
 	if strings.TrimSpace(title) == "" {
 		return Article{}, EmptyStrErr("title")
 	}
 
-	authorLastname := getUserInput(reader, "Ingresa el apellido del autor: ")
+	authorLastname := getUserInput(reader, &buffer, "Ingresa el apellido del autor: ")
 	if strings.TrimSpace(authorLastname) == "" {
 		return Article{}, EmptyStrErr("author__last_name")
 	}
 
-	authorFirstname := getUserInput(reader, "Ingresa el nombre del autor: ")
+	authorFirstname := getUserInput(reader, &buffer, "Ingresa el nombre del autor: ")
 
 	if strings.TrimSpace(authorFirstname) == "" {
 		return Article{}, EmptyStrErr("author__first_name")
 	}
 
-	dateStr := getUserInput(reader, "Ingresa la fecha de publicacion (YYYY-MM-DD): ")
+	dateStr := getUserInput(reader, &buffer, "Ingresa la fecha de publicacion (YYYY-MM-DD): ")
 	var datePublished time.Time
 	if dateStr != "" {
 		if d, err := formater.ParseString(dateStr); err == nil {
@@ -75,7 +75,7 @@ func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 		}
 	}
 
-	pageRangeStr := getUserInput(reader, "Ingresa el rango de paginas (inicio-fin): ")
+	pageRangeStr := getUserInput(reader, &buffer, "Ingresa el rango de paginas (inicio-fin): ")
 	var pageRangeStart *int
 	var pageRangeEnd *int
 
@@ -96,26 +96,26 @@ func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 		return Article{}, fmt.Errorf("invalid page range format, expected start-end")
 	}
 
-	pageRangeStartInt := uint64(*pageRangeStart)
-	pageRangeEndInt := uint64(*pageRangeEnd)
+	pageRangeStartInt := uint(*pageRangeStart)
+	pageRangeEndInt := uint(*pageRangeEnd)
 
 	if pageRangeStartInt > pageRangeEndInt {
 		return Article{}, fmt.Errorf("page range start cannot be greater than end")
 	}
 
-	urlStr := getUserInput(reader, "Ingresa la URL: ")
+	urlStr := getUserInput(reader, &buffer, "Ingresa la URL: ")
 	var url *string
 	if urlStr != "" {
 		url = &urlStr
 	}
 
-	journalStr := getUserInput(reader, "Ingresa el nombre de la revista: ")
+	journalStr := getUserInput(reader, &buffer, "Ingresa el nombre de la revista: ")
 	var journalName *string
 	if journalStr != "" {
 		journalName = &journalStr
 	}
 
-	annotStr := getUserInput(reader, "Ingresa la anotacion: ")
+	annotStr := getUserInput(reader, &buffer, "Ingresa la anotacion: ")
 	var annotation *string
 	if annotStr != "" {
 		annotation = &annotStr
@@ -130,7 +130,7 @@ func (a *ArticleManager) NewFromTerminal(in io.Reader) (Article, error) {
 
 	return Article{
 		Title:          title,
-		Author:         Author{LastName: authorLastname, FirstName: authorFirstname},
+		Author:         models.Author{LastName: authorLastname, FirstName: authorFirstname},
 		DatePublished:  datePublished,
 		PageRangeStart: pageRangeStartInt,
 		PageRangeEnd:   pageRangeEndInt,
@@ -150,12 +150,8 @@ func (a *ArticleManager) Create(article *Article) error {
 	return nil
 }
 
-func (a *ArticleManager) Find(query string) ([]Article, error) {
+func (a *ArticleManager) Find(query *Article) ([]Article, error) {
 	var articles []Article
-
-	if query == "" {
-		query = "1=1"
-	}
 
 	result := a.DB.Where(query).Find(&articles)
 	if result.Error != nil {
@@ -166,24 +162,16 @@ func (a *ArticleManager) Find(query string) ([]Article, error) {
 	return articles, nil
 }
 
-func (a *ArticleManager) Update(id uint64, updates map[string]interface{}) error {
-	err := a.DB.Model(&Article{}).Where("id = ?", id).Updates(updates).Error
-	if err != nil {
-		return fmt.Errorf("failed to update article: %w", err)
-	}
-	return nil
+func (a *ArticleManager) Save(article *Article) *gorm.DB {
+	return a.DB.Save(article)
 }
 
-func (a *ArticleManager) Delete(id uint64) error {
-	err := a.DB.Delete(&Article{}, id).Error
-	if err != nil {
-		return fmt.Errorf("failed to delete article: %w", err)
-	}
-	return nil
+func (a *ArticleManager) Delete(article *Article) *gorm.DB {
+	return a.DB.Delete(article)
 }
 
-func getUserInput(in *bufio.Reader, instruction string) string {
-	fmt.Print(instruction)
+func getUserInput(in *bufio.Reader, out io.Writer, instruction string) string {
+	fmt.Fprintln(out, instruction)
 	texto, err := in.ReadString('\n')
 	if err != nil {
 		return ""

@@ -12,7 +12,7 @@ import (
 func main() {
 	godotenv.Load(".env")
 
-	db, err := infra.Database.Connect2()
+	db, err := infra.Database.Connect()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "database connection failed: %v\n", err)
 		os.Exit(1)

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/cocodrilette/researchdiary/models"
 )
 
 func TestNewArticleFromTerminal(t *testing.T) {
@@ -24,7 +26,7 @@ func TestNewArticleFromTerminal(t *testing.T) {
 
 		want := Article{
 			Title:          "Test1",
-			Author:         Author{FirstName: "AuthorFN", LastName: "AuthorLN"},
+			Author:         models.Author{FirstName: "AuthorFN", LastName: "AuthorLN"},
 			DatePublished:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			PageRangeStart: 1,
 			PageRangeEnd:   10,

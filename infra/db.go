@@ -11,8 +11,8 @@ type DB struct {
 	conn *gorm.DB
 }
 
-func (db *DB) Connect2() (*gorm.DB, error) {
-	conn, err := gorm.Open(postgres.Open(os.Getenv("DATABASE_DSN")), )
+func (db *DB) Connect() (*gorm.DB, error) {
+	conn, err := gorm.Open(postgres.Open(os.Getenv("DATABASE_DSN")))
 
 	if err == nil {
 		db.conn = conn

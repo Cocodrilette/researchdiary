@@ -1,11 +1,16 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Author struct {
-	gorm.Model
-
-	ID uint64 `gorm:"primaryKey;autoIncrement:true"`
+	ID        uint `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	FirstName string
 	LastName  string
