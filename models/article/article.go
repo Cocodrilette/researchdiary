@@ -3,6 +3,7 @@ package models
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"strconv"
@@ -163,7 +164,13 @@ func (a *ArticleManager) Find(query *Article) ([]Article, error) {
 }
 
 func (a *ArticleManager) Save(article *Article) *gorm.DB {
-	return a.DB.Save(article)
+	// This prevent unintended creation when no rows match
+	return a.DB.Select("*").Updates(article)
+}
+
+func (a *ArticleManager) Update(article *Article, key string, value any) (int, error) {
+	// This updates a single column so is efficient than .Save which rewrite all fields
+	return gorm.G[Article](a.DB).Where(article).Update(context.Background(), key, value)
 }
 
 func (a *ArticleManager) Delete(article *Article) *gorm.DB {
